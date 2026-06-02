@@ -72,6 +72,6 @@ jobs:
             -Danypoint.businessGroupId=${{ vars.ANYPOINT_BUSINESS_GROUP_ID }} \
             -Danypoint.client.id=${{ secrets.ANYPOINT_CLIENT_ID }} \
             -Danypoint.client.secret=${{ secrets.ANYPOINT_CLIENT_SECRET }} \
-            -Danypoint.muleVersion=4.11.4:4e \
+            -Danypoint.muleVersion=4.11.4 \
             -Dmule.env=dev \
             -Dsecure.key=$SECURE_KEY
