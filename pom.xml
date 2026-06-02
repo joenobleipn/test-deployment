@@ -36,6 +36,23 @@
 							<artifactId>postgresql</artifactId>
 						</sharedLibrary>
 					</sharedLibraries>
+					<cloudhub2Deployment>
+						<uri>https://eu1.anypoint.mulesoft.com</uri>
+						<provider>MC</provider>
+						<environment>${anypoint.environment}</environment>
+						<target>${anypoint.target}</target>
+						<muleVersion>${app.runtime}</muleVersion>
+						<applicationName>${anypoint.appName}</applicationName>
+						<connectedAppClientId>${anypoint.client.id}</connectedAppClientId>
+						<connectedAppClientSecret>${anypoint.client.secret}</connectedAppClientSecret>
+						<connectedAppGrantType>client_credentials</connectedAppGrantType>
+						<businessGroupId>${anypoint.businessGroupId}</businessGroupId>
+						<replicas>1</replicas>
+						<vCores>0.1</vCores>
+						<properties>
+							<mule.env>${mule.env}</mule.env>
+						</properties>
+					</cloudhub2Deployment>
 				</configuration>
 			</plugin>
 		</plugins>
