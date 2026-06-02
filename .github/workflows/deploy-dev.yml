@@ -26,13 +26,6 @@ jobs:
           echo "SECURE_KEY=$SECURE_KEY" >> $GITHUB_ENV
           echo "::add-mask::$SECURE_KEY"
 
-      - name: Download Secure Properties Tool
-        run: |
-          mvn dependency:copy \
-            -Dartifact=com.mulesoft.tools:secure-properties-tool:1.2.7 \
-            -DoutputDirectory=. \
-            -Dmdep.stripVersion=true
-
       - name: Encrypt secrets and build secure config
         env:
           DB_HOST: ${{ secrets.DB_HOST }}
@@ -42,8 +35,13 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
           encrypt() {
-            java -jar secure-properties-tool.jar \
-              string encrypt AES CBC "$SECURE_KEY" "$1"
+            curl -sf --location 'https://secure-properties-api.us-e1.cloudhub.io/api/string' \
+              --form 'operation="encrypt"' \
+              --form 'algorithm="AES"' \
+              --form 'mode="CBC"' \
+              --form "key=\"$SECURE_KEY\"" \
+              --form "value=\"$1\"" \
+              --form 'method="string"' | jq -r '.property'
           }
 
           ENC_DB_HOST=$(encrypt "$DB_HOST")
