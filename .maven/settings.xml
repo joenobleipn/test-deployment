@@ -6,7 +6,7 @@
 		<server>
 			<id>anypoint-exchange-v3</id>
 			<username>~~~Client~~~</username>
-			<password>${env.ANYPOINT_CLIENT_ID}~?~${env.ANYPOINT_CLIENT_SECRET}</password>
+			<password>ANYPOINT_CLIENT_ID_PLACEHOLDER~?~ANYPOINT_CLIENT_SECRET_PLACEHOLDER</password>
 		</server>
 	</servers>
 	<profiles>
@@ -16,7 +16,7 @@
 				<repository>
 					<id>anypoint-exchange-v3</id>
 					<name>Anypoint Exchange</name>
-					<url>https://maven.eu1.anypoint.mulesoft.com/api/v3/maven</url>
+					<url>https://maven.eu1.anypoint.mulesoft.com/api/v3/organizations/ANYPOINT_ORG_ID_PLACEHOLDER/maven</url>
 				</repository>
 				<repository>
 					<id>mulesoft-releases</id>

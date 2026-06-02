@@ -60,16 +60,16 @@ jobs:
           EOF
           sed -i 's/^          //' src/main/resources/properties/config-dev-secure.yaml
 
+      - name: Configure Maven settings
+        run: |
+          sed -i "s|ANYPOINT_CLIENT_ID_PLACEHOLDER|${{ secrets.ANYPOINT_CLIENT_ID }}|g" .maven/settings.xml
+          sed -i "s|ANYPOINT_CLIENT_SECRET_PLACEHOLDER|${{ secrets.ANYPOINT_CLIENT_SECRET }}|g" .maven/settings.xml
+          sed -i "s|ANYPOINT_ORG_ID_PLACEHOLDER|${{ vars.ANYPOINT_BUSINESS_GROUP_ID }}|g" .maven/settings.xml
+
       - name: Build
-        env:
-          ANYPOINT_CLIENT_ID: ${{ secrets.ANYPOINT_CLIENT_ID }}
-          ANYPOINT_CLIENT_SECRET: ${{ secrets.ANYPOINT_CLIENT_SECRET }}
         run: mvn clean package -DskipTests -s .maven/settings.xml
 
       - name: Deploy to CloudHub 2.0
-        env:
-          ANYPOINT_CLIENT_ID: ${{ secrets.ANYPOINT_CLIENT_ID }}
-          ANYPOINT_CLIENT_SECRET: ${{ secrets.ANYPOINT_CLIENT_SECRET }}
         run: |
           mvn deploy -DmuleDeploy -DskipTests -s .maven/settings.xml \
             -Danypoint.environment=${{ vars.ANYPOINT_ENVIRONMENT }} \
