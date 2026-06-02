@@ -60,9 +60,15 @@ jobs:
           sed -i 's/^          //' src/main/resources/properties/config-prod-secure.yaml
 
       - name: Build
+        env:
+          ANYPOINT_CLIENT_ID: ${{ secrets.ANYPOINT_CLIENT_ID }}
+          ANYPOINT_CLIENT_SECRET: ${{ secrets.ANYPOINT_CLIENT_SECRET }}
         run: mvn clean package -DskipTests -s .maven/settings.xml
 
       - name: Deploy to CloudHub 2.0
+        env:
+          ANYPOINT_CLIENT_ID: ${{ secrets.ANYPOINT_CLIENT_ID }}
+          ANYPOINT_CLIENT_SECRET: ${{ secrets.ANYPOINT_CLIENT_SECRET }}
         run: |
           mvn deploy -DmuleDeploy -DskipTests -s .maven/settings.xml \
             -Danypoint.environment=${{ vars.ANYPOINT_ENVIRONMENT }} \
