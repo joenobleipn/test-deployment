@@ -1,0 +1,75 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: Production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      - name: Generate encryption key
+        run: |
+          SECURE_KEY=$(openssl rand -hex 16)
+          echo "SECURE_KEY=$SECURE_KEY" >> $GITHUB_ENV
+          echo "::add-mask::$SECURE_KEY"
+
+      - name: Download Secure Properties Tool
+        run: |
+          curl -sL -o secure-properties-tool.jar \
+            "https://docs.mulesoft.com/downloads/mule-runtime/4.2/secure-properties-tool.jar"
+
+      - name: Encrypt secrets and build secure config
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          encrypt() {
+            java -cp secure-properties-tool.jar com.mulesoft.tools.SecurePropertiesTool \
+              string encrypt AES CBC "$SECURE_KEY" "$1"
+          }
+
+          ENC_DB_HOST=$(encrypt "$DB_HOST")
+          ENC_DB_PORT=$(encrypt "$DB_PORT")
+          ENC_DB_NAME=$(encrypt "$DB_NAME")
+          ENC_DB_USER=$(encrypt "$DB_USER")
+          ENC_DB_PASSWORD=$(encrypt "$DB_PASSWORD")
+
+          cat > src/main/resources/properties/config-prod-secure.yaml <<EOF
+          db:
+            host: "![${ENC_DB_HOST}]"
+            port: "![${ENC_DB_PORT}]"
+            name: "![${ENC_DB_NAME}]"
+            user: "![${ENC_DB_USER}]"
+            password: "![${ENC_DB_PASSWORD}]"
+          EOF
+          sed -i 's/^          //' src/main/resources/properties/config-prod-secure.yaml
+
+      - name: Build
+        run: mvn clean package -DskipTests
+
+      - name: Deploy to CloudHub 2.0
+        run: |
+          mvn deploy -DmuleDeploy -DskipTests \
+            -Danypoint.environment=${{ vars.ANYPOINT_ENVIRONMENT }} \
+            -Danypoint.target=${{ vars.ANYPOINT_TARGET }} \
+            -Danypoint.appName=${{ vars.ANYPOINT_APP_NAME }} \
+            -Danypoint.businessGroupId=${{ vars.ANYPOINT_BUSINESS_GROUP_ID }} \
+            -Danypoint.client.id=${{ secrets.ANYPOINT_CLIENT_ID }} \
+            -Danypoint.client.secret=${{ secrets.ANYPOINT_CLIENT_SECRET }} \
+            -Dmule.env=prod \
+            -Dsecure.key=$SECURE_KEY

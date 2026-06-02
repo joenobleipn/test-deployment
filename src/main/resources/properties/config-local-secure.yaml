@@ -1,0 +1,6 @@
+db:
+  host: "![encrypted_value]"
+  port: "![encrypted_value]"
+  name: "![encrypted_value]"
+  user: "![encrypted_value]"
+  password: "![encrypted_value]"

@@ -1,9 +1,2 @@
 http:
   port: "8081"
-
-db:
-  host: "34.78.66.149"
-  port: "5432"
-  name: "dataFlowParameters"
-  user: "wMio"
-  password: "H$8K=F/P)3&}kK=~"

@@ -51,6 +51,7 @@
 						<vCores>0.1</vCores>
 						<properties>
 							<mule.env>${mule.env}</mule.env>
+							<secure.key>${secure.key}</secure.key>
 						</properties>
 					</cloudhub2Deployment>
 				</configuration>
@@ -81,6 +82,12 @@
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<version>42.7.10</version>
+		</dependency>
+		<dependency>
+			<groupId>com.mulesoft.modules</groupId>
+			<artifactId>mule-secure-configuration-property-module</artifactId>
+			<version>1.2.7</version>
+			<classifier>mule-plugin</classifier>
 		</dependency>
 	</dependencies>
 
