@@ -16,6 +16,11 @@
 					<name>MuleSoft Releases</name>
 					<url>https://repository.mulesoft.org/releases/</url>
 				</repository>
+				<repository>
+					<id>mulesoft-public</id>
+					<name>MuleSoft Public</name>
+					<url>https://repository.mulesoft.org/nexus/content/repositories/public/</url>
+				</repository>
 			</repositories>
 			<pluginRepositories>
 				<pluginRepository>
