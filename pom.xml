@@ -41,7 +41,6 @@
 						<provider>MC</provider>
 						<environment>${anypoint.environment}</environment>
 						<target>${anypoint.target}</target>
-						<muleVersion>${anypoint.muleVersion}</muleVersion>
 						<applicationName>${anypoint.appName}</applicationName>
 						<connectedAppClientId>${anypoint.client.id}</connectedAppClientId>
 						<connectedAppClientSecret>${anypoint.client.secret}</connectedAppClientSecret>
