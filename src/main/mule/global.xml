@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+		http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+
+	<configuration-properties doc:name="Configuration properties" doc:id="config-props-001" file="properties/config-${mule.env}.yaml" />
+
+	<http:listener-config name="HTTP_Listener_Config" doc:name="HTTP Listener config" doc:id="http-listener-001">
+		<http:listener-connection host="0.0.0.0" port="${http.port}" />
+	</http:listener-config>
+
+	<db:config name="Database_Config_Postgres" doc:name="Database Config" doc:id="db-config-001">
+		<db:generic-connection
+			url="jdbc:postgresql://${db.host}:${db.port}/${db.name}?sslmode=require"
+			driverClassName="org.postgresql.Driver"
+			user="${db.user}"
+			password="${db.password}" />
+	</db:config>
+
+</mule>
