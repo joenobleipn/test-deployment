@@ -28,8 +28,10 @@ jobs:
 
       - name: Download Secure Properties Tool
         run: |
-          curl -sL -o secure-properties-tool.jar \
-            "https://docs.mulesoft.com/downloads/mule-runtime/4.2/secure-properties-tool.jar"
+          mvn dependency:copy \
+            -Dartifact=com.mulesoft.tools:secure-properties-tool:1.2.7 \
+            -DoutputDirectory=. \
+            -Dmdep.stripVersion=true
 
       - name: Encrypt secrets and build secure config
         env:
@@ -40,7 +42,7 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
           encrypt() {
-            java -cp secure-properties-tool.jar com.mulesoft.tools.SecurePropertiesTool \
+            java -jar secure-properties-tool.jar \
               string encrypt AES CBC "$SECURE_KEY" "$1"
           }
 
