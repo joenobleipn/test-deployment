@@ -61,11 +61,11 @@ jobs:
           sed -i 's/^          //' src/main/resources/properties/config-dev-secure.yaml
 
       - name: Build
-        run: mvn clean package -DskipTests
+        run: mvn clean package -DskipTests -s .maven/settings.xml
 
       - name: Deploy to CloudHub 2.0
         run: |
-          mvn deploy -DmuleDeploy -DskipTests \
+          mvn deploy -DmuleDeploy -DskipTests -s .maven/settings.xml \
             -Danypoint.environment=${{ vars.ANYPOINT_ENVIRONMENT }} \
             -Danypoint.target=${{ vars.ANYPOINT_TARGET }} \
             -Danypoint.appName=${{ vars.ANYPOINT_APP_NAME }} \
