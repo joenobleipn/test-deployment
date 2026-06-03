@@ -8,6 +8,11 @@
 			<username>~~~Client~~~</username>
 			<password>ANYPOINT_CLIENT_ID_PLACEHOLDER~?~ANYPOINT_CLIENT_SECRET_PLACEHOLDER</password>
 		</server>
+		<server>
+			<id>Repository</id>
+			<username>~~~Client~~~</username>
+			<password>ANYPOINT_CLIENT_ID_PLACEHOLDER~?~ANYPOINT_CLIENT_SECRET_PLACEHOLDER</password>
+		</server>
 	</servers>
 	<profiles>
 		<profile>

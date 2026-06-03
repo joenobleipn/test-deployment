@@ -86,7 +86,7 @@ jobs:
             -Danypoint.environment=${{ vars.ANYPOINT_ENVIRONMENT }} \
             -Danypoint.target=${{ vars.ANYPOINT_TARGET }} \
             -Danypoint.appName=${{ vars.ANYPOINT_APP_NAME }} \
-            -Danypoint.businessGroupId=${{ vars.ANYPOINT_BUSINESS_GROUP_ID }} \
             -Danypoint.client.id=${{ secrets.ANYPOINT_CLIENT_ID }} \
             -Danypoint.client.secret=${{ secrets.ANYPOINT_CLIENT_SECRET }} \
+            -DmuleVersion=4.8.0 \
             -Dsecure.key=$SECURE_KEY

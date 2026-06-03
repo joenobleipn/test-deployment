@@ -13,11 +13,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
       - name: Generate encryption key
         run: |
           SECURE_KEY=$(openssl rand -hex 16)
           echo "SECURE_KEY=$SECURE_KEY" >> $GITHUB_ENV
-          # echo "::add-mask::$SECURE_KEY"  # disabled for testing
+          echo "::add-mask::$SECURE_KEY"
 
       - name: Build secure-properties.yaml from mapping
         run: |
@@ -36,7 +43,6 @@ jobs:
           cp "$MAPPING" "$OUTPUT"
 
           LOOKUP=$(echo "$ALL_SECRETS" "$ALL_VARS" | jq -s 'add')
-          MISSING=()
 
           grep -oP '\{\{\s*(secrets|vars)\.(\K[A-Z_0-9]+)' "$MAPPING" | sort -u | while read -r KEY; do
             VALUE=$(echo "$LOOKUP" | jq -r --arg k "$KEY" '.[$k] // empty')
@@ -62,16 +68,26 @@ jobs:
             echo "========================================="
             exit 1
           fi
-
-          echo "$SECURE_KEY" > secure-key.txt
         env:
           ALL_SECRETS: ${{ toJSON(secrets) }}
           ALL_VARS: ${{ toJSON(vars) }}
 
-      - name: Upload secure-properties.yaml as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: secure-properties
-          path: |
-            src/main/resources/properties/secure-properties.yaml
-            secure-key.txt
+      - name: Configure Maven settings
+        run: |
+          sed -i "s|ANYPOINT_CLIENT_ID_PLACEHOLDER|${{ secrets.ANYPOINT_CLIENT_ID }}|g" .maven/settings.xml
+          sed -i "s|ANYPOINT_CLIENT_SECRET_PLACEHOLDER|${{ secrets.ANYPOINT_CLIENT_SECRET }}|g" .maven/settings.xml
+          sed -i "s|ANYPOINT_ORG_ID_PLACEHOLDER|${{ vars.ANYPOINT_BUSINESS_GROUP_ID }}|g" .maven/settings.xml
+
+      - name: Build
+        run: mvn clean package -DskipTests -s .maven/settings.xml
+
+      - name: Deploy to CloudHub 2.0
+        run: |
+          mvn deploy -DmuleDeploy -DskipTests -s .maven/settings.xml \
+            -Danypoint.environment=${{ vars.ANYPOINT_ENVIRONMENT }} \
+            -Danypoint.target=${{ vars.ANYPOINT_TARGET }} \
+            -Danypoint.appName=${{ vars.ANYPOINT_APP_NAME }} \
+            -Danypoint.client.id=${{ secrets.ANYPOINT_CLIENT_ID }} \
+            -Danypoint.client.secret=${{ secrets.ANYPOINT_CLIENT_SECRET }} \
+            -DmuleVersion=4.8.0 \
+            -Dsecure.key=$SECURE_KEY
