@@ -45,3 +45,6 @@ target/
 .mule/
 .DS_Store
 velocity.log
+
+# Secure properties (local unencrypted values)
+src/main/resources/properties/secure-properties.yaml

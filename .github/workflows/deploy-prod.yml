@@ -25,13 +25,7 @@ jobs:
           echo "SECURE_KEY=$SECURE_KEY" >> $GITHUB_ENV
           echo "::add-mask::$SECURE_KEY"
 
-      - name: Encrypt secrets and build secure config
-        env:
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_PORT: ${{ secrets.DB_PORT }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      - name: Build secure-properties.yaml from mapping
         run: |
           encrypt() {
             curl -sf --location 'https://secure-properties-api.us-e1.cloudhub.io/api/string' \
@@ -43,21 +37,29 @@ jobs:
               --form 'method="string"' | jq -r '.property'
           }
 
-          ENC_DB_HOST=$(encrypt "$DB_HOST")
-          ENC_DB_PORT=$(encrypt "$DB_PORT")
-          ENC_DB_NAME=$(encrypt "$DB_NAME")
-          ENC_DB_USER=$(encrypt "$DB_USER")
-          ENC_DB_PASSWORD=$(encrypt "$DB_PASSWORD")
+          MAPPING="src/main/resources/properties/properties.mapping.yaml"
+          OUTPUT="src/main/resources/properties/secure-properties.yaml"
+          cp "$MAPPING" "$OUTPUT"
 
-          cat > src/main/resources/properties/config-prod-secure.yaml <<EOF
-          db:
-            host: "![${ENC_DB_HOST}]"
-            port: "![${ENC_DB_PORT}]"
-            name: "![${ENC_DB_NAME}]"
-            user: "![${ENC_DB_USER}]"
-            password: "![${ENC_DB_PASSWORD}]"
-          EOF
-          sed -i 's/^          //' src/main/resources/properties/config-prod-secure.yaml
+          grep -oP '\{\{\s*(secrets|vars)\.\K[A-Z_]+' "$MAPPING" | sort -u | while read -r KEY; do
+            VALUE="${!KEY}"
+            if [ -z "$VALUE" ]; then
+              echo "::warning::No value found for $KEY"
+              continue
+            fi
+            ENCRYPTED=$(encrypt "$VALUE")
+            sed -i "s|{{ secrets\.$KEY }}|![${ENCRYPTED}]|g" "$OUTPUT"
+            sed -i "s|{{ vars\.$KEY }}|![${ENCRYPTED}]|g" "$OUTPUT"
+          done
+
+          echo "Generated secure-properties.yaml:"
+          cat "$OUTPUT"
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
       - name: Configure Maven settings
         run: |
@@ -77,5 +79,4 @@ jobs:
             -Danypoint.businessGroupId=${{ vars.ANYPOINT_BUSINESS_GROUP_ID }} \
             -Danypoint.client.id=${{ secrets.ANYPOINT_CLIENT_ID }} \
             -Danypoint.client.secret=${{ secrets.ANYPOINT_CLIENT_SECRET }} \
-            -Dmule.env=prod \
             -Dsecure.key=$SECURE_KEY

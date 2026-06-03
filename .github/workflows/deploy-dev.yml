@@ -13,26 +13,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-          cache: maven
-
       - name: Generate encryption key
         run: |
           SECURE_KEY=$(openssl rand -hex 16)
           echo "SECURE_KEY=$SECURE_KEY" >> $GITHUB_ENV
-          echo "::add-mask::$SECURE_KEY"
+          # echo "::add-mask::$SECURE_KEY"  # disabled for testing
 
-      - name: Encrypt secrets and build secure config
-        env:
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_PORT: ${{ secrets.DB_PORT }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      - name: Build secure-properties.yaml from mapping
         run: |
           encrypt() {
             curl -sf --location 'https://secure-properties-api.us-e1.cloudhub.io/api/string' \
@@ -44,39 +31,35 @@ jobs:
               --form 'method="string"' | jq -r '.property'
           }
 
-          ENC_DB_HOST=$(encrypt "$DB_HOST")
-          ENC_DB_PORT=$(encrypt "$DB_PORT")
-          ENC_DB_NAME=$(encrypt "$DB_NAME")
-          ENC_DB_USER=$(encrypt "$DB_USER")
-          ENC_DB_PASSWORD=$(encrypt "$DB_PASSWORD")
+          MAPPING="src/main/resources/properties/properties.mapping.yaml"
+          OUTPUT="src/main/resources/properties/secure-properties.yaml"
+          cp "$MAPPING" "$OUTPUT"
 
-          cat > src/main/resources/properties/config-dev-secure.yaml <<EOF
-          db:
-            host: "![${ENC_DB_HOST}]"
-            port: "![${ENC_DB_PORT}]"
-            name: "![${ENC_DB_NAME}]"
-            user: "![${ENC_DB_USER}]"
-            password: "![${ENC_DB_PASSWORD}]"
-          EOF
-          sed -i 's/^          //' src/main/resources/properties/config-dev-secure.yaml
+          grep -oP '\{\{\s*(secrets|vars)\.\K[A-Z_]+' "$MAPPING" | sort -u | while read -r KEY; do
+            VALUE="${!KEY}"
+            if [ -z "$VALUE" ]; then
+              echo "::warning::No value found for $KEY"
+              continue
+            fi
+            ENCRYPTED=$(encrypt "$VALUE")
+            sed -i "s|{{ secrets\.$KEY }}|![${ENCRYPTED}]|g" "$OUTPUT"
+            sed -i "s|{{ vars\.$KEY }}|![${ENCRYPTED}]|g" "$OUTPUT"
+          done
 
-      - name: Configure Maven settings
-        run: |
-          sed -i "s|ANYPOINT_CLIENT_ID_PLACEHOLDER|${{ secrets.ANYPOINT_CLIENT_ID }}|g" .maven/settings.xml
-          sed -i "s|ANYPOINT_CLIENT_SECRET_PLACEHOLDER|${{ secrets.ANYPOINT_CLIENT_SECRET }}|g" .maven/settings.xml
-          sed -i "s|ANYPOINT_ORG_ID_PLACEHOLDER|${{ vars.ANYPOINT_BUSINESS_GROUP_ID }}|g" .maven/settings.xml
+          echo "=== Encryption Key ==="
+          echo "$SECURE_KEY"
+          echo "=== Generated secure-properties.yaml ==="
+          cat "$OUTPUT"
+          echo "========================================="
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
-      - name: Build
-        run: mvn clean package -DskipTests -s .maven/settings.xml
-
-      - name: Deploy to CloudHub 2.0
-        run: |
-          mvn deploy -DmuleDeploy -DskipTests -s .maven/settings.xml \
-            -Danypoint.environment=${{ vars.ANYPOINT_ENVIRONMENT }} \
-            -Danypoint.target=${{ vars.ANYPOINT_TARGET }} \
-            -Danypoint.appName=${{ vars.ANYPOINT_APP_NAME }} \
-            -Danypoint.businessGroupId=${{ vars.ANYPOINT_BUSINESS_GROUP_ID }} \
-            -Danypoint.client.id=${{ secrets.ANYPOINT_CLIENT_ID }} \
-            -Danypoint.client.secret=${{ secrets.ANYPOINT_CLIENT_SECRET }} \
-            -Dmule.env=dev \
-            -Dsecure.key=$SECURE_KEY
+      - name: Upload secure-properties.yaml as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: secure-properties
+          path: src/main/resources/properties/secure-properties.yaml

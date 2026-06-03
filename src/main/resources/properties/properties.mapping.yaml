@@ -1,0 +1,6 @@
+db:
+  host: "{{ secrets.DB_HOST }}"
+  port: "{{ secrets.DB_PORT }}"
+  name: "{{ secrets.DB_NAME }}"
+  user: "{{ secrets.DB_USER }}"
+  password: "{{ secrets.DB_PASSWORD }}"
