@@ -89,5 +89,5 @@ jobs:
             -Danypoint.appName=${{ vars.ANYPOINT_APP_NAME }} \
             -Danypoint.client.id=${{ secrets.ANYPOINT_CLIENT_ID }} \
             -Danypoint.client.secret=${{ secrets.ANYPOINT_CLIENT_SECRET }} \
-            -DmuleVersion=4.11.4:4e \
+            -DmuleVersion=4.11.4:4e-java17 \
             -Dsecure.key=$SECURE_KEY
