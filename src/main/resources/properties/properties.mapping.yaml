@@ -4,3 +4,4 @@ db:
   name: "{{ secrets.DB_NAME }}"
   user: "{{ secrets.DB_USER }}"
   password: "{{ secrets.DB_PASSWORD }}"
+  test: "{{ secrets.DB_TEST }}"
