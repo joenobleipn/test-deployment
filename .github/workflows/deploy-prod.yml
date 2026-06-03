@@ -77,12 +77,12 @@ jobs:
           sed -i "s|ANYPOINT_CLIENT_SECRET_PLACEHOLDER|${{ secrets.ANYPOINT_CLIENT_SECRET }}|g" .maven/settings.xml
           sed -i "s|ANYPOINT_ORG_ID_PLACEHOLDER|${{ vars.ANYPOINT_BUSINESS_GROUP_ID }}|g" .maven/settings.xml
 
-      - name: Build
-        run: mvn clean package -DskipTests -s .maven/settings.xml
+      - name: Build and publish to Exchange
+        run: mvn clean deploy -DskipTests -s .maven/settings.xml
 
       - name: Deploy to CloudHub 2.0
         run: |
-          mvn deploy -DmuleDeploy -DskipTests -s .maven/settings.xml \
+          mvn mule:deploy -DmuleDeploy -s .maven/settings.xml \
             -Danypoint.environment=${{ vars.ANYPOINT_ENVIRONMENT }} \
             -Danypoint.target=${{ vars.ANYPOINT_TARGET }} \
             -Danypoint.appName=${{ vars.ANYPOINT_APP_NAME }} \
