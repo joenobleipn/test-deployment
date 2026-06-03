@@ -41,10 +41,13 @@ jobs:
           OUTPUT="src/main/resources/properties/secure-properties.yaml"
           cp "$MAPPING" "$OUTPUT"
 
-          grep -oP '\{\{\s*(secrets|vars)\.\K[A-Z_]+' "$MAPPING" | sort -u | while read -r KEY; do
-            VALUE="${!KEY}"
+          LOOKUP=$(echo "$ALL_SECRETS" "$ALL_VARS" | jq -s 'add')
+
+          grep -oP '\{\{\s*(secrets|vars)\.(\K[A-Z_0-9]+)' "$MAPPING" | sort -u | while read -r KEY; do
+            VALUE=$(echo "$LOOKUP" | jq -r --arg k "$KEY" '.[$k] // empty')
             if [ -z "$VALUE" ]; then
-              echo "::warning::No value found for $KEY"
+              echo "::error::Missing GitHub secret or variable: $KEY (referenced in properties.mapping.yaml but not found in this environment)"
+              echo "$KEY" >> /tmp/missing_keys
               continue
             fi
             ENCRYPTED=$(encrypt "$VALUE")
@@ -52,14 +55,21 @@ jobs:
             sed -i "s|{{ vars\.$KEY }}|![${ENCRYPTED}]|g" "$OUTPUT"
           done
 
-          echo "Generated secure-properties.yaml:"
-          cat "$OUTPUT"
+          if [ -f /tmp/missing_keys ]; then
+            echo ""
+            echo "========================================="
+            echo "FAILED: The following secrets/variables are referenced in"
+            echo "properties.mapping.yaml but do not exist in this GitHub environment:"
+            echo ""
+            cat /tmp/missing_keys | sed 's/^/  - /'
+            echo ""
+            echo "Add them in: GitHub repo → Settings → Environments → $(echo $GITHUB_ENVIRONMENT) → Secrets/Variables"
+            echo "========================================="
+            exit 1
+          fi
         env:
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_PORT: ${{ secrets.DB_PORT }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          ALL_SECRETS: ${{ toJSON(secrets) }}
+          ALL_VARS: ${{ toJSON(vars) }}
 
       - name: Configure Maven settings
         run: |
