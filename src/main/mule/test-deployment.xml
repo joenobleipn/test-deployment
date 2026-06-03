@@ -4,25 +4,52 @@
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns:http="http://www.mulesoft.org/schema/mule/http"
 	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os"
 	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="
 		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 		http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 		http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+		http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
 		http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 
 	<flow name="get-items-flow" doc:id="get-items-001">
-		<http:listener doc:name="GET /items" doc:id="get-items-listener-001" config-ref="HTTP_Listener_Config" path="/items" allowedMethods="GET"/>
+		<http:listener doc:name="GET /items" doc:id="get-items-listener-001" config-ref="HTTP_Listener_Config" path="/items" allowedMethods="GET" />
+
+		<!-- Retrieve last called timestamp -->
+		<try doc:name="Try retrieve last called" doc:id="get-items-try-001">
+			<os:retrieve doc:name="Retrieve last called" doc:id="get-items-os-retrieve-001"
+				key="lastCalledAt" objectStore="Last_Called_Store" target="lastCalledAt" />
+			<error-handler>
+				<on-error-continue type="OS:KEY_NOT_FOUND" doc:name="Key not found" doc:id="get-items-os-error-001">
+					<set-variable doc:name="Set lastCalledAt to null" doc:id="get-items-set-null-001"
+						variableName="lastCalledAt" value="#[null]" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+
+		<!-- Store current timestamp -->
+		<os:store doc:name="Store current timestamp" doc:id="get-items-os-store-001"
+			key="lastCalledAt" objectStore="Last_Called_Store">
+			<os:value><![CDATA[#[now() as String {format: "yyyy-MM-dd'T'HH:mm:ss.SSSZ"}]]]></os:value>
+		</os:store>
+
+		<!-- Query products -->
 		<db:select doc:name="Select all products" doc:id="get-items-db-001" config-ref="Database_Config_Postgres">
 			<db:sql>SELECT * FROM jn_test_products</db:sql>
 		</db:select>
+
+		<!-- Build response with last called -->
 		<ee:transform doc:name="To JSON" doc:id="get-items-transform-001">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
-payload]]></ee:set-payload>
+{
+	lastCalledAt: vars.lastCalledAt,
+	items: payload
+}]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 	</flow>

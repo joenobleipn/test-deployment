@@ -4,12 +4,14 @@
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns:http="http://www.mulesoft.org/schema/mule/http"
 	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os"
 	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="
 		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 		http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 		http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+		http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
 		http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
 
 	<configuration-properties doc:name="Configuration properties" doc:id="config-props-001" file="properties/config.yaml" />
@@ -22,6 +24,9 @@
 	<http:listener-config name="HTTP_Listener_Config" doc:name="HTTP Listener config" doc:id="http-listener-001">
 		<http:listener-connection host="0.0.0.0" port="${http.port}" />
 	</http:listener-config>
+
+	<os:object-store name="Last_Called_Store" doc:name="Object Store" doc:id="os-config-001"
+		persistent="true" />
 
 	<db:config name="Database_Config_Postgres" doc:name="Database Config" doc:id="db-config-001">
 		<db:generic-connection

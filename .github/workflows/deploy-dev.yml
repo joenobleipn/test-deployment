@@ -78,6 +78,15 @@ jobs:
           sed -i "s|ANYPOINT_CLIENT_SECRET_PLACEHOLDER|${{ secrets.ANYPOINT_CLIENT_SECRET }}|g" .maven/settings.xml
           sed -i "s|ANYPOINT_ORG_ID_PLACEHOLDER|${{ vars.ANYPOINT_BUSINESS_GROUP_ID }}|g" .maven/settings.xml
 
+      - name: Enable Object Store v2 if needed
+        run: |
+          if grep -q 'mule-objectstore-connector' pom.xml; then
+            echo "Object Store connector detected — enabling Object Store v2"
+            sed -i 's|</deploymentSettings>|</deploymentSettings>\n\t\t\t\t\t\t<integrations>\n\t\t\t\t\t\t\t<services>\n\t\t\t\t\t\t\t\t<objectStoreV2>\n\t\t\t\t\t\t\t\t\t<enabled>true</enabled>\n\t\t\t\t\t\t\t\t</objectStoreV2>\n\t\t\t\t\t\t\t</services>\n\t\t\t\t\t\t</integrations>|' pom.xml
+          else
+            echo "No Object Store connector found — skipping"
+          fi
+
       - name: Build and publish to Exchange
         run: mvn clean deploy -DskipTests -s .maven/settings.xml
 
