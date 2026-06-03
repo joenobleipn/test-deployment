@@ -4,7 +4,7 @@
 
 	<groupId>2a75a1fe-500b-40ed-8b17-e88df99d4c87</groupId>
 	<artifactId>test-deployment</artifactId>
-	<version>1.0.0</version>
+	<version>${revision}</version>
 	<packaging>mule-application</packaging>
 
 	<name>test-deployment</name>
@@ -50,9 +50,9 @@
 						<businessGroupId>${business.group.id}</businessGroupId>
 						<replicas>1</replicas>
 						<vCores>0.1</vCores>
-						<properties>
+						<secureProperties>
 							<secure.key>${secure.key}</secure.key>
-						</properties>
+						</secureProperties>
 						<deploymentSettings>
 							<generateDefaultPublicUrl>false</generateDefaultPublicUrl>
 						</deploymentSettings>
