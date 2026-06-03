@@ -71,12 +71,6 @@ jobs:
           ALL_SECRETS: ${{ toJSON(secrets) }}
           ALL_VARS: ${{ toJSON(vars) }}
 
-      - name: Generate version
-        run: |
-          VERSION="1.0.$(date +%Y%m%d%H%M%S)"
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "Deploying version: $VERSION"
-
       - name: Configure Maven settings
         run: |
           sed -i "s|ANYPOINT_CLIENT_ID_PLACEHOLDER|${{ secrets.ANYPOINT_CLIENT_ID }}|g" .maven/settings.xml
@@ -84,11 +78,11 @@ jobs:
           sed -i "s|ANYPOINT_ORG_ID_PLACEHOLDER|${{ vars.ANYPOINT_BUSINESS_GROUP_ID }}|g" .maven/settings.xml
 
       - name: Build and publish to Exchange
-        run: mvn clean deploy -DskipTests -s .maven/settings.xml -Drevision=$VERSION
+        run: mvn clean deploy -DskipTests -s .maven/settings.xml
 
       - name: Deploy to CloudHub 2.0
         run: |
-          mvn mule:deploy -DmuleDeploy -s .maven/settings.xml -Drevision=$VERSION \
+          mvn mule:deploy -DmuleDeploy -s .maven/settings.xml \
             -Danypoint.environment=${{ vars.ANYPOINT_ENVIRONMENT }} \
             -Danypoint.target=${{ vars.ANYPOINT_TARGET }} \
             -Danypoint.appName=${{ vars.ANYPOINT_APP_NAME }} \
